@@ -33,3 +33,25 @@ jobs:
         run: npm install
       - name: Build Website With Parcel
         run: npx parcel build "./src/index.html" --dist-dir "./dist" --public-url "./" --no-cache
+
+  image-build-job:
+     needs: "build-job"
+     runs-on: ubuntu-latest
+     steps:
+      - name: Clone Repo To build Image
+        uses: actions/checkout@v6
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build Image
+        run: docker image build -t ${{ secrets.DOCKERHUB_USERNAME }}/app:latest .  
+      - name: List images on the Runner
+        run: docker image ls
+      - name: Create container on the Runner  
+        run: docker container run -d -p 2222:80 ${{ secrets.DOCKERHUB_USERNAME }}/app:latest
+      - name: list running conitiners
+        run: docker container ls
+      - name: push docker image on the Docker hub
+        run:  docker push ${{ secrets.DOCKERHUB_USERNAME }}/app:latest 
